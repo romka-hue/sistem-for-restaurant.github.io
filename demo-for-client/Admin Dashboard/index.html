@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - sherekilebi</title>
+    <link rel="stylesheet" href="styles/admin.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../Customer Web App/website/source/logo-transperent.png">
+</head>
+<body>
+    <nav class="admin-nav">
+        <div class="logo">
+            <img src="../Customer Web App/website/source/logo-transperent.png" alt="sherekilebi">
+            <span>Admin Dashboard</span>
+        </div>
+        <div class="nav-links">
+            <button class="nav-btn active" data-section="overview">Overview</button>
+            <button class="nav-btn" data-section="menu">Menu Management</button>
+            <button class="nav-btn" data-section="analytics">Analytics</button>
+            <button class="nav-btn" data-section="settings">Settings</button>
+        </div>
+        <div class="user-info">
+            <span>Admin</span>
+            <button class="logout-btn">Logout</button>
+        </div>
+    </nav>
+
+    <main class="admin-main">
+        <!-- Overview Section -->
+        <section id="overview-section" class="section active">
+            <div class="section-header">
+                <h2>Restaurant Overview</h2>
+                <div class="date-filter">
+                    <select id="date-range">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="overview-stats">
+                <div class="stat-card revenue">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <h3 id="total-revenue">$0</h3>
+                        <p>Total Revenue</p>
+                    </div>
+                </div>
+                <div class="stat-card orders">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-info">
+                        <h3 id="total-orders">0</h3>
+                        <p>Total Orders</p>
+                    </div>
+                </div>
+                <div class="stat-card reservations">
+                    <div class="stat-icon">🪑</div>
+                    <div class="stat-info">
+                        <h3 id="total-reservations">0</h3>
+                        <p>Reservations</p>
+                    </div>
+                </div>
+                <div class="stat-card customers">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <h3 id="total-customers">0</h3>
+                        <p>Customers</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Popular Items</h3>
+                    <div id="popular-items" class="popular-items-list"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>Recent Orders</h3>
+                    <div id="recent-orders" class="recent-orders-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Menu Management Section -->
+        <section id="menu-section" class="section">
+            <div class="section-header">
+                <h2>Menu Management</h2>
+                <button class="add-btn" onclick="showAddItemModal()">Add New Item</button>
+            </div>
+            
+            <div class="menu-management">
+                <div class="menu-categories">
+                    <div class="category-section">
+                        <h3>Appetizers</h3>
+                        <div id="appetizers-items" class="menu-items-grid"></div>
+                    </div>
+                    <div class="category-section">
+                        <h3>Main Courses</h3>
+                        <div id="main-courses-items" class="menu-items-grid"></div>
+                    </div>
+                    <div class="category-section">
+                        <h3>Desserts</h3>
+                        <div id="desserts-items" class="menu-items-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics-section" class="section">
+            <div class="section-header">
+                <h2>Analytics & Reports</h2>
+            </div>
+            
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h3>Sales Trends</h3>
+                    <div class="trend-info">
+                        <p>Daily Average: <span id="daily-average">$0</span></p>
+                        <p>Weekly Growth: <span id="weekly-growth">0%</span></p>
+                        <p>Monthly Total: <span id="monthly-total">$0</span></p>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <h3>Customer Insights</h3>
+                    <div class="customer-info">
+                        <p>Repeat Customers: <span id="repeat-customers">0</span></p>
+                        <p>Average Order Value: <span id="avg-order-value">$0</span></p>
+                        <p>Peak Hours: <span id="peak-hours">6-8 PM</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings-section" class="section">
+            <div class="section-header">
+                <h2>Restaurant Settings</h2>
+            </div>
+            
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <h3>Restaurant Information</h3>
+                    <form id="restaurant-info-form">
+                        <div class="form-group">
+                            <label>Restaurant Name:</label>
+                            <input type="text" value="sherekilebi" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone:</label>
+                            <input type="tel" value="+995 511 70 04 00">
+                        </div>
+                        <div class="form-group">
+                            <label>Address:</label>
+                            <input type="text" value="Batumi, Georgia">
+                        </div>
+                        <div class="form-group">
+                            <label>Operating Hours:</label>
+                            <input type="text" value="Mon-Sun 10:00 AM - 11:00 PM">
+                        </div>
+                    </form>
+                </div>
+                <div class="settings-card">
+                    <h3>System Settings</h3>
+                    <div class="settings-options">
+                        <div class="setting-item">
+                            <label>Enable Online Ordering:</label>
+                            <input type="checkbox" checked>
+                        </div>
+                        <div class="setting-item">
+                            <label>Enable Reservations:</label>
+                            <input type="checkbox" checked>
+                        </div>
+                        <div class="setting-item">
+                            <label>Tax Rate (%):</label>
+                            <input type="number" value="10" min="0" max="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add Item Modal -->
+    <div id="add-item-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Menu Item</h2>
+            <form id="add-item-form">
+                <div class="form-group">
+                    <label>Item Name:</label>
+                    <input type="text" id="item-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea id="item-description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Price ($):</label>
+                    <input type="number" id="item-price" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Category:</label>
+                    <select id="item-category" required>
+                        <option value="appetizers">Appetizers</option>
+                        <option value="main-courses">Main Courses</option>
+                        <option value="desserts">Desserts</option>
+                    </select>
+                </div>
+                <button type="submit">Add Item</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="scripts/admin.js"></script>
+</body>
+</html>

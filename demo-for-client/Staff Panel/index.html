@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Panel - sherekilebi</title>
+    <link rel="stylesheet" href="styles/staff.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../Customer Web App/website/source/logo-transperent.png">
+</head>
+<body>
+    <nav class="staff-nav">
+        <div class="logo">
+            <img src="../Customer Web App/website/source/logo-transperent.png" alt="sherekilebi">
+            <span>Staff Panel</span>
+        </div>
+        <div class="nav-links">
+            <button class="nav-btn active" data-section="orders">Orders</button>
+            <button class="nav-btn" data-section="reservations">Reservations</button>
+            <button class="nav-btn" data-section="tables">Tables</button>
+        </div>
+        <div class="user-info">
+            <span>Staff Member</span>
+            <button class="logout-btn">Logout</button>
+        </div>
+    </nav>
+
+    <main class="staff-main">
+        <!-- Orders Section -->
+        <section id="orders-section" class="section active">
+            <div class="section-header">
+                <h2>Orders Management</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3 id="pending-orders">0</h3>
+                        <p>Pending Orders</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="preparing-orders">0</h3>
+                        <p>Preparing</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="ready-orders">0</h3>
+                        <p>Ready</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="orders-container">
+                <div class="orders-column">
+                    <h3>Pending Orders</h3>
+                    <div id="pending-orders-list" class="orders-list"></div>
+                </div>
+                <div class="orders-column">
+                    <h3>Preparing</h3>
+                    <div id="preparing-orders-list" class="orders-list"></div>
+                </div>
+                <div class="orders-column">
+                    <h3>Ready</h3>
+                    <div id="ready-orders-list" class="orders-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reservations Section -->
+        <section id="reservations-section" class="section">
+            <div class="section-header">
+                <h2>Reservations Management</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3 id="today-reservations">0</h3>
+                        <p>Today's Reservations</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="upcoming-reservations">0</h3>
+                        <p>Upcoming</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reservations-container">
+                <div id="reservations-list" class="reservations-list"></div>
+            </div>
+        </section>
+
+        <!-- Tables Section -->
+        <section id="tables-section" class="section">
+            <div class="section-header">
+                <h2>Table Management</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3 id="available-tables">0</h3>
+                        <p>Available</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="occupied-tables">0</h3>
+                        <p>Occupied</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tables-grid" id="tables-grid">
+                <!-- Tables will be dynamically generated -->
+            </div>
+        </section>
+    </main>
+
+    <script src="scripts/staff.js"></script>
+</body>
+</html>
