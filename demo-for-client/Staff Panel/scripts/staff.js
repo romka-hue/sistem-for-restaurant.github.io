@@ -175,6 +175,12 @@ function displayReservations(reservations) {
                 ${reservation.selectedTable ? `<p><strong>Table:</strong> ${reservation.selectedTable}</p>` : ''}
                 ${reservation.specialRequests ? `<p><strong>Special Requests:</strong> ${reservation.specialRequests}</p>` : ''}
             </div>
+            ${reservation.status === 'pending' ? `
+                <div class="order-actions" style="margin-top: 15px;">
+                    <button class="action-btn accept-btn" onclick="updateReservationStatus('${reservation.id}', 'confirmed')">Confirm</button>
+                    <button class="action-btn" onclick="updateReservationStatus('${reservation.id}', 'cancelled')" style="background: #e74c3c;">Cancel</button>
+                </div>
+            ` : ''}
         `;
         
         container.appendChild(reservationCard);
@@ -286,7 +292,7 @@ function addSampleData() {
                 date: new Date().toISOString().split('T')[0],
                 time: '19:00',
                 partySize: '4',
-                status: 'confirmed',
+                status: 'pending',
                 selectedTable: '3'
             }
         ];
@@ -296,3 +302,14 @@ function addSampleData() {
 
 // Initialize sample data
 addSampleData();
+
+function updateReservationStatus(reservationId, newStatus) {
+    let reservations = JSON.parse(localStorage.getItem('restaurantReservations')) || [];
+    const reservationIndex = reservations.findIndex(res => res.id === reservationId);
+    
+    if (reservationIndex !== -1) {
+        reservations[reservationIndex].status = newStatus;
+        localStorage.setItem('restaurantReservations', JSON.stringify(reservations));
+        loadReservations();
+    }
+}

@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const today = new Date().toISOString().split('T')[0];
     dateInput.min = today;
     
-    // Table selection
+    // Table   
     tableCards.forEach(card => {
         card.addEventListener('click', function() {
             const tableStatus = this.querySelector('.status');
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
             tablePreference: document.getElementById('table-preference').value,
             specialRequests: document.getElementById('special-requests').value,
             selectedTable: selectedTable,
-            status: 'confirmed',
+            status: 'pending',
             timestamp: new Date().toISOString()
         };
         
@@ -98,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         detailsContainer.innerHTML = `
-            <h4>Reservation Details</h4>
+            <h4>Reservation Submitted</h4>
+            <p style="color: #f39c12; margin-bottom: 15px;">⏳ Your reservation is pending confirmation. Our staff will call you shortly to confirm.</p>
             <p><strong>Name:</strong> ${reservationData.customer.name}</p>
             <p><strong>Phone:</strong> ${reservationData.customer.phone}</p>
             <p><strong>Date:</strong> ${formattedDate}</p>
