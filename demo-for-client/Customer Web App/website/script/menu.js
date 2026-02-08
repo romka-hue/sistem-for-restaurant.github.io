@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Roman
+// Licensed under the GNU Affero General Public License v3.0
+
 document.addEventListener('DOMContentLoaded', () => {
     // dynamic nav offset for sticky elements and anchor offsets
     const navEl = document.querySelector('nav');

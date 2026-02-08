@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Roman
+// Licensed under the GNU Affero General Public License v3.0
+
 // Staff Panel functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Navigation functionality

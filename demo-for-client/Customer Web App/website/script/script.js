@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Roman
+// Licensed under the GNU Affero General Public License v3.0
+
 document.querySelectorAll('a[href^="#"]').forEach(link => {
     link.addEventListener('click', function(e) {
         e.preventDefault();

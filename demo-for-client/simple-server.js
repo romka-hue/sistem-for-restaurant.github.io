@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Roman
+// Licensed under the GNU Affero General Public License v3.0
+
 // Simple file-based server (no database needed)
 const express = require('express');
 const fs = require('fs');
