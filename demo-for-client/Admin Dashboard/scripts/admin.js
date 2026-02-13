@@ -70,27 +70,33 @@ function loadSectionData(section) {
 }
 
 // Overview Section
-function loadOverviewData() {
-    const orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
-    const reservations = JSON.parse(localStorage.getItem('restaurantReservations')) || [];
-    
-    // Calculate stats
-    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-    const totalOrders = orders.length;
-    const totalReservations = reservations.length;
-    const uniqueCustomers = new Set(orders.map(order => order.customer.phone)).size;
-    
-    // Update stats display
-    document.getElementById('total-revenue').textContent = `$${totalRevenue.toFixed(2)}`;
-    document.getElementById('total-orders').textContent = totalOrders;
-    document.getElementById('total-reservations').textContent = totalReservations;
-    document.getElementById('total-customers').textContent = uniqueCustomers;
-    
-    // Load popular items
-    loadPopularItems(orders);
-    
-    // Load recent orders
-    loadRecentOrders(orders);
+async function loadOverviewData() {
+    try {
+        const apiUrl = window.location.protocol === 'file:' 
+            ? 'http://localhost:3000/api'
+            : '/api';
+        
+        const ordersResponse = await fetch(`${apiUrl}/orders`);
+        const reservationsResponse = await fetch(`${apiUrl}/reservations`);
+        
+        const orders = await ordersResponse.json();
+        const reservations = await reservationsResponse.json();
+        
+        const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.total), 0);
+        const totalOrders = orders.length;
+        const totalReservations = reservations.length;
+        const uniqueCustomers = new Set(orders.map(order => order.customer_phone)).size;
+        
+        document.getElementById('total-revenue').textContent = `$${totalRevenue.toFixed(2)}`;
+        document.getElementById('total-orders').textContent = totalOrders;
+        document.getElementById('total-reservations').textContent = totalReservations;
+        document.getElementById('total-customers').textContent = uniqueCustomers;
+        
+        loadPopularItems(orders);
+        loadRecentOrders(orders);
+    } catch (err) {
+        console.error('Failed to load overview data:', err);
+    }
 }
 
 function loadPopularItems(orders) {
@@ -98,7 +104,8 @@ function loadPopularItems(orders) {
     const itemRevenue = {};
     
     orders.forEach(order => {
-        order.items.forEach(item => {
+        const items = JSON.parse(order.items);
+        items.forEach(item => {
             const itemName = item.name;
             itemCounts[itemName] = (itemCounts[itemName] || 0) + item.quantity;
             itemRevenue[itemName] = (itemRevenue[itemName] || 0) + (item.price * item.quantity);
@@ -138,7 +145,7 @@ function loadPopularItems(orders) {
 
 function loadRecentOrders(orders) {
     const recentOrders = orders
-        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, 5);
     
     const container = document.getElementById('recent-orders');
@@ -153,14 +160,14 @@ function loadRecentOrders(orders) {
         const orderElement = document.createElement('div');
         orderElement.className = 'recent-order';
         
-        const orderTime = new Date(order.timestamp).toLocaleTimeString();
+        const orderTime = new Date(order.created_at).toLocaleTimeString();
         
         orderElement.innerHTML = `
             <div class="order-info">
-                <div class="order-customer">${order.customer.name}</div>
+                <div class="order-customer">${order.customer_name}</div>
                 <div class="order-time">${orderTime}</div>
             </div>
-            <div class="order-amount">$${order.total.toFixed(2)}</div>
+            <div class="order-amount">$${parseFloat(order.total).toFixed(2)}</div>
         `;
         container.appendChild(orderElement);
     });
@@ -253,38 +260,40 @@ function deleteMenuItem(itemId) {
 }
 
 // Analytics Section
-function loadAnalytics() {
-    const orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
-    
-    if (orders.length === 0) {
-        // Show default values
-        document.getElementById('daily-average').textContent = '$0';
-        document.getElementById('weekly-growth').textContent = '0%';
-        document.getElementById('monthly-total').textContent = '$0';
-        document.getElementById('repeat-customers').textContent = '0';
-        document.getElementById('avg-order-value').textContent = '$0';
-        return;
+async function loadAnalytics() {
+    try {
+        const apiUrl = window.location.protocol === 'file:' 
+            ? 'http://localhost:3000/api/orders'
+            : '/api/orders';
+        
+        const response = await fetch(apiUrl);
+        const orders = await response.json();
+        
+        if (orders.length === 0) {
+            document.getElementById('daily-average').textContent = '$0';
+            document.getElementById('weekly-growth').textContent = '0%';
+            document.getElementById('monthly-total').textContent = '$0';
+            document.getElementById('repeat-customers').textContent = '0';
+            document.getElementById('avg-order-value').textContent = '$0';
+            return;
+        }
+        
+        const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.total), 0);
+        const avgOrderValue = totalRevenue / orders.length;
+        const dailyAverage = totalRevenue / 30;
+        const weeklyGrowth = 15;
+        const monthlyTotal = totalRevenue;
+        const uniqueCustomers = new Set(orders.map(order => order.customer_phone));
+        const repeatCustomers = orders.length - uniqueCustomers.size;
+        
+        document.getElementById('daily-average').textContent = `$${dailyAverage.toFixed(2)}`;
+        document.getElementById('weekly-growth').textContent = `${weeklyGrowth}%`;
+        document.getElementById('monthly-total').textContent = `$${monthlyTotal.toFixed(2)}`;
+        document.getElementById('repeat-customers').textContent = repeatCustomers;
+        document.getElementById('avg-order-value').textContent = `$${avgOrderValue.toFixed(2)}`;
+    } catch (err) {
+        console.error('Failed to load analytics:', err);
     }
-    
-    // Calculate analytics
-    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-    const avgOrderValue = totalRevenue / orders.length;
-    
-    // Simple calculations for demo
-    const dailyAverage = totalRevenue / 30; // Assuming 30 days
-    const weeklyGrowth = 15; // Mock growth percentage
-    const monthlyTotal = totalRevenue;
-    
-    // Customer analytics
-    const uniqueCustomers = new Set(orders.map(order => order.customer.phone));
-    const repeatCustomers = orders.length - uniqueCustomers.size;
-    
-    // Update display
-    document.getElementById('daily-average').textContent = `$${dailyAverage.toFixed(2)}`;
-    document.getElementById('weekly-growth').textContent = `${weeklyGrowth}%`;
-    document.getElementById('monthly-total').textContent = `$${monthlyTotal.toFixed(2)}`;
-    document.getElementById('repeat-customers').textContent = repeatCustomers;
-    document.getElementById('avg-order-value').textContent = `$${avgOrderValue.toFixed(2)}`;
 }
 
 // Settings Section

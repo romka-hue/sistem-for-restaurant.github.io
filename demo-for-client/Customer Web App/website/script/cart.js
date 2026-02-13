@@ -134,40 +134,52 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     if (checkoutForm) {
-        checkoutForm.addEventListener('submit', function(e) {
+        checkoutForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const total = subtotal * 1.1;
+            
             const orderData = {
-                id: 'ORD-' + Date.now(),
-                customer: {
-                    name: document.getElementById('customer-name').value,
-                    phone: document.getElementById('customer-phone').value,
-                    address: document.getElementById('delivery-address').value
-                },
                 items: cart,
-                orderType: document.getElementById('order-type').value,
-                subtotal: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-                tax: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.1,
-                total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 1.1,
-                status: 'pending',
-                timestamp: new Date().toISOString()
+                total: total,
+                customer_name: document.getElementById('customer-name').value,
+                customer_email: document.getElementById('customer-email')?.value || '',
+                customer_phone: document.getElementById('customer-phone').value
             };
             
-            // Save order to localStorage (in real app, send to server)
-            let orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
-            orders.push(orderData);
-            localStorage.setItem('restaurantOrders', JSON.stringify(orders));
-            
-            // Clear cart
-            cart = [];
-            localStorage.setItem('restaurantCart', JSON.stringify(cart));
-            
-            // Show success message
-            alert(`Order placed successfully! Order ID: ${orderData.id}`);
-            
-            // Close modal and refresh page
-            checkoutModal.style.display = 'none';
-            window.location.reload();
+            try {
+                // Detect if running through server or file://
+                const apiUrl = window.location.protocol === 'file:' 
+                    ? 'http://localhost:3000/api/orders'
+                    : '/api/orders';
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Server error');
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    cart = [];
+                    localStorage.setItem('restaurantCart', JSON.stringify(cart));
+                    alert(`Order placed successfully! Order ID: ${result.order.id}`);
+                    checkoutModal.style.display = 'none';
+                    window.location.reload();
+                } else {
+                    alert('Order failed: ' + (result.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Order error:', err);
+                alert('Failed to place order: ' + err.message + '\n\nMake sure the server is running at http://localhost:3000');
+            }
         });
     }
 });

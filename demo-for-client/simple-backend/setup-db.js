@@ -4,9 +4,9 @@ async function setupDatabase() {
     // Connect to postgres database to create our database
     const client = new Client({
         host: 'localhost',
-        port: 5432,
+        port: 5000,
         user: 'postgres',
-        password: 'postgres', // Change if your password is different
+        password: 'kuana123r', // Change if your password is different
         database: 'postgres'
     });
 
@@ -36,9 +36,9 @@ async function setupDatabase() {
         // Now connect to restaurant_db and create tables
         const dbClient = new Client({
             host: 'localhost',
-            port: 5432,
+            port: 5000,
             user: 'postgres',
-            password: 'postgres',
+            password: 'kuana123r',
             database: 'restaurant_db'
         });
 

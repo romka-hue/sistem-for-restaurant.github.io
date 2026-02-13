@@ -1,6 +1,3 @@
-// Copyright (c) 2026 Roman
-// Licensed under the GNU Affero General Public License v3.0
-
 // Staff Panel functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Navigation functionality
@@ -53,26 +50,38 @@ function loadSectionData(section) {
 }
 
 // Orders Management
-function loadOrders() {
-    const orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
-    
-    const pendingOrders = orders.filter(order => order.status === 'pending');
-    const preparingOrders = orders.filter(order => order.status === 'preparing');
-    const readyOrders = orders.filter(order => order.status === 'ready');
-    
-    // Update stats
-    document.getElementById('pending-orders').textContent = pendingOrders.length;
-    document.getElementById('preparing-orders').textContent = preparingOrders.length;
-    document.getElementById('ready-orders').textContent = readyOrders.length;
-    
-    // Display orders in columns
-    displayOrdersInColumn('pending-orders-list', pendingOrders, 'pending');
-    displayOrdersInColumn('preparing-orders-list', preparingOrders, 'preparing');
-    displayOrdersInColumn('ready-orders-list', readyOrders, 'ready');
+async function loadOrders() {
+    try {
+        const apiUrl = window.location.protocol === 'file:' 
+            ? 'http://localhost:3000/api/orders'
+            : '/api/orders';
+        
+        const response = await fetch(apiUrl);
+        const orders = await response.json();
+        
+        // Filter orders by status
+        const pendingOrders = orders.filter(order => order.status === 'pending');
+        const preparingOrders = orders.filter(order => order.status === 'preparing');
+        const readyOrders = orders.filter(order => order.status === 'ready');
+        
+        // Update stats
+        document.getElementById('pending-orders').textContent = pendingOrders.length;
+        document.getElementById('preparing-orders').textContent = preparingOrders.length;
+        document.getElementById('ready-orders').textContent = readyOrders.length;
+        
+        // Display orders in columns
+        displayOrdersInColumn('pending-orders-list', pendingOrders, 'pending');
+        displayOrdersInColumn('preparing-orders-list', preparingOrders, 'preparing');
+        displayOrdersInColumn('ready-orders-list', readyOrders, 'ready');
+    } catch (err) {
+        console.error('Failed to load orders:', err);
+    }
 }
 
 function displayOrdersInColumn(containerId, orders, status) {
     const container = document.getElementById(containerId);
+    if (!container) return;
+    
     container.innerHTML = '';
     
     if (orders.length === 0) {
@@ -84,17 +93,19 @@ function displayOrdersInColumn(containerId, orders, status) {
         const orderCard = document.createElement('div');
         orderCard.className = 'order-card';
         
-        const orderTime = new Date(order.timestamp).toLocaleTimeString();
-        const itemsList = order.items.map(item => `${item.quantity}x ${item.name}`).join(', ');
+        // Format order data
+        const orderTime = new Date(order.created_at).toLocaleTimeString();
+        const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+        const itemsList = items.map(item => `${item.quantity}x ${item.name}`).join(', ');
         
         orderCard.innerHTML = `
             <div class="order-header">
-                <span class="order-id">${order.id}</span>
+                <span class="order-id">ORD-${order.id}</span>
                 <span class="order-time">${orderTime}</span>
             </div>
-            <div class="order-customer">${order.customer.name}</div>
+            <div class="order-customer">${order.customer_name}</div>
             <div class="order-items">${itemsList}</div>
-            <div class="order-total">Total: $${order.total.toFixed(2)}</div>
+            <div class="order-total">Total: $${parseFloat(order.total).toFixed(2)}</div>
             <div class="order-actions">
                 ${getOrderActions(order.id, status)}
             </div>
@@ -107,46 +118,63 @@ function displayOrdersInColumn(containerId, orders, status) {
 function getOrderActions(orderId, status) {
     switch(status) {
         case 'pending':
-            return `<button class="action-btn accept-btn" onclick="updateOrderStatus('${orderId}', 'preparing')">Accept</button>`;
+            return `<button class="action-btn accept-btn" onclick="updateOrderStatus(${orderId}, 'preparing')">Accept</button>`;
         case 'preparing':
-            return `<button class="action-btn ready-btn" onclick="updateOrderStatus('${orderId}', 'ready')">Mark Ready</button>`;
+            return `<button class="action-btn ready-btn" onclick="updateOrderStatus(${orderId}, 'ready')">Mark Ready</button>`;
         case 'ready':
-            return `<button class="action-btn complete-btn" onclick="updateOrderStatus('${orderId}', 'completed')">Complete</button>`;
+            return `<button class="action-btn complete-btn" onclick="updateOrderStatus(${orderId}, 'completed')">Complete</button>`;
         default:
             return '';
     }
 }
 
-function updateOrderStatus(orderId, newStatus) {
-    let orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
-    const orderIndex = orders.findIndex(order => order.id === orderId);
-    
-    if (orderIndex !== -1) {
-        orders[orderIndex].status = newStatus;
-        localStorage.setItem('restaurantOrders', JSON.stringify(orders));
-        loadOrders(); // Refresh the display
+async function updateOrderStatus(orderId, newStatus) {
+    try {
+        const apiUrl = window.location.protocol === 'file:' 
+            ? `http://localhost:3000/api/orders/${orderId}`
+            : `/api/orders/${orderId}`;
+        
+        const response = await fetch(apiUrl, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (response.ok) {
+            loadOrders();
+        }
+    } catch (err) {
+        console.error('Failed to update order:', err);
     }
 }
 
 // Reservations Management
-function loadReservations() {
-    const reservations = JSON.parse(localStorage.getItem('restaurantReservations')) || [];
-    const today = new Date().toDateString();
-    
-    const todayReservations = reservations.filter(res => 
-        new Date(res.date).toDateString() === today
-    );
-    
-    const upcomingReservations = reservations.filter(res => 
-        new Date(res.date) > new Date()
-    );
-    
-    // Update stats
-    document.getElementById('today-reservations').textContent = todayReservations.length;
-    document.getElementById('upcoming-reservations').textContent = upcomingReservations.length;
-    
-    // Display reservations
-    displayReservations(reservations);
+async function loadReservations() {
+    try {
+        const apiUrl = window.location.protocol === 'file:' 
+            ? 'http://localhost:3000/api/reservations'
+            : '/api/reservations';
+        
+        const response = await fetch(apiUrl);
+        const reservations = await response.json();
+        
+        // Filter reservations
+        const today = new Date().toDateString();
+        const todayReservations = reservations.filter(res => 
+            new Date(res.date).toDateString() === today
+        );
+        const upcomingReservations = reservations.filter(res => 
+            new Date(res.date) > new Date()
+        );
+        
+        // Update stats
+        document.getElementById('today-reservations').textContent = todayReservations.length;
+        document.getElementById('upcoming-reservations').textContent = upcomingReservations.length;
+        
+        displayReservations(reservations);
+    } catch (err) {
+        console.error('Failed to load reservations:', err);
+    }
 }
 
 function displayReservations(reservations) {
@@ -166,22 +194,20 @@ function displayReservations(reservations) {
         
         reservationCard.innerHTML = `
             <div class="reservation-header">
-                <span class="reservation-id">${reservation.id}</span>
+                <span class="reservation-id">RES-${reservation.id}</span>
                 <span class="reservation-status status-${reservation.status}">${reservation.status}</span>
             </div>
             <div class="reservation-details">
-                <p><strong>Name:</strong> ${reservation.customer.name}</p>
-                <p><strong>Phone:</strong> ${reservation.customer.phone}</p>
+                <p><strong>Name:</strong> ${reservation.name}</p>
+                <p><strong>Phone:</strong> ${reservation.phone}</p>
                 <p><strong>Date:</strong> ${reservationDate}</p>
                 <p><strong>Time:</strong> ${reservation.time}</p>
-                <p><strong>Party Size:</strong> ${reservation.partySize} people</p>
-                ${reservation.selectedTable ? `<p><strong>Table:</strong> ${reservation.selectedTable}</p>` : ''}
-                ${reservation.specialRequests ? `<p><strong>Special Requests:</strong> ${reservation.specialRequests}</p>` : ''}
+                <p><strong>Party Size:</strong> ${reservation.guests} people</p>
             </div>
             ${reservation.status === 'pending' ? `
                 <div class="order-actions" style="margin-top: 15px;">
-                    <button class="action-btn accept-btn" onclick="updateReservationStatus('${reservation.id}', 'confirmed')">Confirm</button>
-                    <button class="action-btn" onclick="updateReservationStatus('${reservation.id}', 'cancelled')" style="background: #e74c3c;">Cancel</button>
+                    <button class="action-btn accept-btn" onclick="updateReservationStatus(${reservation.id}, 'confirmed')">Confirm</button>
+                    <button class="action-btn" onclick="updateReservationStatus(${reservation.id}, 'cancelled')" style="background: #e74c3c;">Cancel</button>
                 </div>
             ` : ''}
         `;
@@ -190,9 +216,29 @@ function displayReservations(reservations) {
     });
 }
 
+async function updateReservationStatus(reservationId, newStatus) {
+    try {
+        const apiUrl = window.location.protocol === 'file:' 
+            ? `http://localhost:3000/api/reservations/${reservationId}`
+            : `/api/reservations/${reservationId}`;
+        
+        const response = await fetch(apiUrl, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (response.ok) {
+            loadReservations();
+        }
+    } catch (err) {
+        console.error('Failed to update reservation:', err);
+    }
+}
+
 // Tables Management
 function loadTables() {
-    // Generate sample tables (in real app, this would come from database)
+    // Sample tables (in real app, this would come from database)
     const tables = [
         { id: 1, capacity: '2-4', status: 'available' },
         { id: 2, capacity: '2-4', status: 'occupied' },
@@ -211,7 +257,6 @@ function loadTables() {
     document.getElementById('available-tables').textContent = availableTables;
     document.getElementById('occupied-tables').textContent = occupiedTables;
     
-    // Display tables
     displayTables(tables);
 }
 
@@ -252,67 +297,4 @@ function toggleTableStatus(tableId, currentStatus) {
     
     // Refresh tables display
     loadTables();
-}
-
-// Add some sample data for demo
-function addSampleData() {
-    // Add sample orders if none exist
-    const existingOrders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
-    if (existingOrders.length === 0) {
-        const sampleOrders = [
-            {
-                id: 'ORD-001',
-                customer: { name: 'John Doe', phone: '+995 555 0001' },
-                items: [
-                    { name: 'Khachapuri', quantity: 2, price: 14 },
-                    { name: 'Georgian Wine', quantity: 1, price: 8 }
-                ],
-                status: 'pending',
-                total: 36,
-                timestamp: new Date().toISOString()
-            },
-            {
-                id: 'ORD-002',
-                customer: { name: 'Jane Smith', phone: '+995 555 0002' },
-                items: [
-                    { name: 'Khinkali', quantity: 1, price: 16 }
-                ],
-                status: 'preparing',
-                total: 16,
-                timestamp: new Date(Date.now() - 600000).toISOString()
-            }
-        ];
-        localStorage.setItem('restaurantOrders', JSON.stringify(sampleOrders));
-    }
-    
-    // Add sample reservations if none exist
-    const existingReservations = JSON.parse(localStorage.getItem('restaurantReservations')) || [];
-    if (existingReservations.length === 0) {
-        const sampleReservations = [
-            {
-                id: 'RES-001',
-                customer: { name: 'Alice Johnson', phone: '+995 555 0003' },
-                date: new Date().toISOString().split('T')[0],
-                time: '19:00',
-                partySize: '4',
-                status: 'pending',
-                selectedTable: '3'
-            }
-        ];
-        localStorage.setItem('restaurantReservations', JSON.stringify(sampleReservations));
-    }
-}
-
-// Initialize sample data
-addSampleData();
-
-function updateReservationStatus(reservationId, newStatus) {
-    let reservations = JSON.parse(localStorage.getItem('restaurantReservations')) || [];
-    const reservationIndex = reservations.findIndex(res => res.id === reservationId);
-    
-    if (reservationIndex !== -1) {
-        reservations[reservationIndex].status = newStatus;
-        localStorage.setItem('restaurantReservations', JSON.stringify(reservations));
-        loadReservations();
-    }
 }

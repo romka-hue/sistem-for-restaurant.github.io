@@ -62,32 +62,46 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('reservation-time').addEventListener('change', updateAvailableTables);
     
     // Form submission
-    reservationForm.addEventListener('submit', function(e) {
+    reservationForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const formData = {
-            id: 'RES-' + Date.now(),
-            customer: {
-                name: document.getElementById('guest-name').value,
-                phone: document.getElementById('guest-phone').value
-            },
+            name: document.getElementById('guest-name').value,
+            email: document.getElementById('guest-email')?.value || '',
+            phone: document.getElementById('guest-phone').value,
             date: document.getElementById('reservation-date').value,
             time: document.getElementById('reservation-time').value,
-            partySize: document.getElementById('party-size').value,
-            tablePreference: document.getElementById('table-preference').value,
-            specialRequests: document.getElementById('special-requests').value,
-            selectedTable: selectedTable,
-            status: 'pending',
-            timestamp: new Date().toISOString()
+            guests: parseInt(document.getElementById('party-size').value)
         };
         
-        // Save reservation to localStorage (in real app, send to server)
-        let reservations = JSON.parse(localStorage.getItem('restaurantReservations')) || [];
-        reservations.push(formData);
-        localStorage.setItem('restaurantReservations', JSON.stringify(reservations));
-        
-        // Show confirmation
-        showConfirmation(formData);
+        try {
+            // Detect if running through server or file://
+            const apiUrl = window.location.protocol === 'file:' 
+                ? 'http://localhost:3000/api/reservations'
+                : '/api/reservations';
+            
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Server error');
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showConfirmation(result.reservation);
+            } else {
+                alert('Reservation failed: ' + (result.error || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Reservation error:', err);
+            alert('Failed to make reservation: ' + err.message + '\n\nMake sure the server is running at http://localhost:3000');
+        }
     });
     
     function showConfirmation(reservationData) {
@@ -103,12 +117,11 @@ document.addEventListener('DOMContentLoaded', function() {
         detailsContainer.innerHTML = `
             <h4>Reservation Submitted</h4>
             <p style="color: #f39c12; margin-bottom: 15px;">⏳ Your reservation is pending confirmation. Our staff will call you shortly to confirm.</p>
-            <p><strong>Name:</strong> ${reservationData.customer.name}</p>
-            <p><strong>Phone:</strong> ${reservationData.customer.phone}</p>
+            <p><strong>Name:</strong> ${reservationData.name}</p>
+            <p><strong>Phone:</strong> ${reservationData.phone}</p>
             <p><strong>Date:</strong> ${formattedDate}</p>
             <p><strong>Time:</strong> ${reservationData.time}</p>
-            <p><strong>Party Size:</strong> ${reservationData.partySize} ${reservationData.partySize === '1' ? 'person' : 'people'}</p>
-            ${reservationData.selectedTable ? `<p><strong>Table:</strong> Table ${reservationData.selectedTable}</p>` : ''}
+            <p><strong>Party Size:</strong> ${reservationData.guests} ${reservationData.guests === 1 ? 'person' : 'people'}</p>
             <p><strong>Reservation ID:</strong> ${reservationData.id}</p>
         `;
         
